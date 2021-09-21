@@ -12,8 +12,6 @@ public class MainClass {
         if (!arq.exists()) {
             arq.mkdir();
         }
-
-
 		try {
 			PpScanner sc = new PpScanner(arq.getPath());
 			Token token = null;
