@@ -31,25 +31,34 @@ public class PpScanner {
 	 * >= '0' && v <= '9'); }
 	 */
 
-	private boolean isDigit(char c) {
+	private boolean isDigit(char c) {//1
 		return c >= '0' && c <= '9';
 	}
 
-	private boolean isChar(char c) {
+	private boolean isChar(char c) {//2
 		return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 	}
 
-	private boolean isOp_Rel(char c) {
+	private boolean isPontuation(char c) {//3
+
+		return c == '?' || c == '!' || c == '.';
+	}
+
+	private boolean isOp_Rel(char c) {//4
 
 		return c == '<' || c == '>' || c == '=' || c == '!';
 	}
 
-	private boolean isOp_Ari(char c) {
+	private boolean isOp_Ari(char c) {//5
 		return c == '+' || c == '-' || c == '*' || c == '/';
 	}
 
-	private boolean isCaracter_esp(char c) {
+	private boolean isCaracter_esp(char c) { //6
 		return c == ')' || c == '(' || c == '{' || c == '}' || c == ',' || c == ';';
+	}
+
+	private boolean isSpace(char c) {
+		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 	}
 
 	private boolean isEOF() {
@@ -60,9 +69,7 @@ public class PpScanner {
 		return content[pos++];
 	}
 
-	private boolean isSpace(char c) {
-		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-	}
+	
 
 	private void back() {
 		pos--;
@@ -83,8 +90,7 @@ public class PpScanner {
 						estado = 1;
 					} else if (isDigit(currentChar)) {
 						estado = 3;
-						term += currentChar;
-						
+						term += currentChar;						
 					} else if (isSpace(currentChar)) {
 						estado = 0;
 					} else if (isOp_Rel(currentChar)) {
@@ -133,7 +139,7 @@ public class PpScanner {
 				case 5:
 					term += currentChar;
 					token =  new Token ();
-					token.setType(Token.TK_OPERATOR);
+					token.setType(Token.TK_CHARACTER);
 					token.setText(term);
 					return token;
 			}
