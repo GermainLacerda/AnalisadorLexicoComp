@@ -25,6 +25,20 @@ public class PpScanner {
 			ex.printStackTrace();
 		}
 	}
+	
+	/*
+	wdj
+	obtriwenfjo
+	NADUFN
+	Skdfji
+	DBHF
+	Kn 
+	d
+	fjkb
+	UODF
+	Ndf
+	*/
+/*
 	public Token nextToken() {
 		if(isEOF()) {
 			return null;
@@ -36,7 +50,7 @@ public class PpScanner {
 			}
 		}
 	}
-	
+*/
 	private boolean isFloat (char c, char v) {
 		return (c >= '0' && c <='9') && (v >= '0' && v <= '9');
 	}
