@@ -2,6 +2,8 @@
 abc123
 palavra
 mMiAnI
+main
+int
 .....
 ?????
 !!!!!
