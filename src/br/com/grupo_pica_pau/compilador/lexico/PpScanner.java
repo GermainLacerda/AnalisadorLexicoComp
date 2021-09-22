@@ -11,6 +11,7 @@ public class PpScanner {
 	private char[] content;
 	private int estado;
 	private int pos;
+	private String nome;
 
 	public PpScanner(String filename) {
 		try {
@@ -26,11 +27,10 @@ public class PpScanner {
 		}
 	}
 
-	/*
-	 * private boolean isFloat(char c, char v) { return (c >= '0' && c <= '9') && (v
-	 * >= '0' && v <= '9'); }
-	 */
-
+	
+	//private boolean isFloat(String string) {}
+	
+	 
 	private boolean isDigit(char c) {// 1
 		return c >= '0' && c <= '9';
 	}
@@ -55,6 +55,11 @@ public class PpScanner {
 
 	private boolean isCaracter_esp(char c) { // 6
 		return c == ')' || c == '(' || c == '{' || c == '}' || c == ',' || c == ';';
+	}
+
+	private boolean isReserved_char(String c){
+		return c.equals("main") || c.equals("if")  || c.equals("else") || c.equals("while") || c.equals("do") || c.equals("for")||
+			   c.equals("int")  || c.equals("float") || c.equals("char");
 	}
 
 	private boolean isSpace(char c) {
@@ -113,15 +118,18 @@ public class PpScanner {
 					if (isChar(currentChar) || isDigit(currentChar)) {
 						estado = 1;
 						term += currentChar;
-					} else {
+					} else if (isReserved_char(term)) {
+						estado = 13;
+					}else {
 						estado = 2;
 					}
 					break;
 				case 2:
-
 					Token token = new Token();
 					token.setText(term);
 					token.setType(token.TK_CHARACTER);
+					nome = "caracteres";
+					token.setNome(nome);
 					back();
 					return token;
 				// ==============================================numeros
@@ -141,6 +149,8 @@ public class PpScanner {
 					token = new Token();
 					token.setText(term);
 					token.setType(token.TK_NUMBER);
+					nome = "inteiros  ";
+					token.setNome(nome);
 					back();
 					return token;
 				// ============================================Pontuação
@@ -158,6 +168,8 @@ public class PpScanner {
 					token = new Token();
 					token.setText(term);
 					token.setType(token.TK_PONTUATION);
+					nome = "Pontuação ";
+					token.setNome(nome);
 					back();
 					return token;
 				// ================================operadores relacionais
@@ -175,6 +187,8 @@ public class PpScanner {
 					token = new Token();
 					token.setText(term);
 					token.setType(token.TK_ASSIGN);
+					nome = "Op Relac  ";
+					token.setNome(nome);
 					back();
 					return token;
 				// ================================operadores aritmetricos
@@ -192,6 +206,8 @@ public class PpScanner {
 					token = new Token();
 					token.setText(term);
 					token.setType(token.TK_OPAritmetric);
+					nome = "Op Aritm  ";
+					token.setNome(nome);
 					back();
 					return token;
 				// ================================Caracteres epeciais
@@ -209,11 +225,41 @@ public class PpScanner {
 					token = new Token();
 					token.setText(term);
 					token.setType(token.TK_CEsp);
+					nome = "Carac Esp ";
+					token.setNome(nome);
 					back();
 					return token;
+			//===============================================Caracteres reservados
+			/*	case 13:
+					exception : uma letra diferente do caractere reservado= */
+				case 13:
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_CResv);
+					nome = "Reservados";
+					token.setNome(nome);
+					back();
+					return token;
+			// ==================================================Float
+			/*	case 14:
+					if (isDigit(currentChar)) {
+						estado = 14;
+						term += currentChar;
+					}else if(isFloat(term)){
+						estado = 15;
+					}
+				case 15:
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_Float);
+					nome = "Float     ";
+					token.setNome(nome);
+					back();
+					return token;*/
 			}
 
 		}
 	}
 
 }
+
