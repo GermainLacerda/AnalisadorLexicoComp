@@ -28,9 +28,10 @@ public class PpScanner {
 	}
 
 	
-	//private boolean isFloat(String string) {}
-	
-	 
+	private boolean isFloat(char c) {
+		return c == '.';
+	}
+		 
 	private boolean isDigit(char c) {// 1
 		return c >= '0' && c <= '9';
 	}
@@ -60,6 +61,9 @@ public class PpScanner {
 	private boolean isReserved_char(String c){
 		return c.equals("main") || c.equals("if")  || c.equals("else") || c.equals("while") || c.equals("do") || c.equals("for")||
 			   c.equals("int")  || c.equals("float") || c.equals("char");
+	}
+	private boolean isPica_pau(String c){
+		return c.equals("Aroldo") ||  c.equals("Felipe") ||  c.equals("Germain") ||  c.equals("Letícia") ||  c.equals("Rodrigo") ||  c.equals("Ryan");
 	}
 
 	private boolean isSpace(char c) {
@@ -120,6 +124,8 @@ public class PpScanner {
 						term += currentChar;
 					} else if (isReserved_char(term)) {
 						estado = 13;
+					}else if(isPica_pau(term)){
+						estado = 16;
 					}else {
 						estado = 2;
 					}
@@ -128,7 +134,7 @@ public class PpScanner {
 					Token token = new Token();
 					token.setText(term);
 					token.setType(token.TK_CHARACTER);
-					nome = "caracteres";
+					nome = "identific.";
 					token.setNome(nome);
 					back();
 					return token;
@@ -141,6 +147,9 @@ public class PpScanner {
 						estado = 1;
 					} else if (isSpace(currentChar) || isOp_Rel(currentChar)) {
 						estado = 4;
+					}else if(isFloat(currentChar)){
+						estado = 14;
+						term += currentChar;
 					} else {
 						throw new RuntimeException("Simbolo numerico nao reconhecido");
 					}
@@ -241,13 +250,15 @@ public class PpScanner {
 					back();
 					return token;
 			// ==================================================Float
-			/*	case 14:
+				case 14:
 					if (isDigit(currentChar)) {
 						estado = 14;
 						term += currentChar;
-					}else if(isFloat(term)){
+					}else if (isSpace(currentChar) || isOp_Rel(currentChar)) {
 						estado = 15;
 					}
+						break;
+					
 				case 15:
 					token = new Token();
 					token.setText(term);
@@ -255,7 +266,17 @@ public class PpScanner {
 					nome = "Float     ";
 					token.setNome(nome);
 					back();
-					return token;*/
+					return token;
+			//  =================================================Integrantes grupo
+				case 16:
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_Integrantes);
+					nome = "Integrante";
+					token.setNome(nome);
+					back();
+					return token;
+
 			}
 
 		}

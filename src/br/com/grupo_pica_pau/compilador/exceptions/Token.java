@@ -11,6 +11,7 @@ public class Token {
 	public static final int TK_CEsp         = 6;
 	public static final int TK_CResv        = 7;
 	public static final int TK_Float        = 8;
+	public static final int TK_Integrantes  = 9;
 	
 
 	private int type;
