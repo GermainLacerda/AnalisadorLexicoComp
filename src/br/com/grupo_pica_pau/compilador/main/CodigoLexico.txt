@@ -4,8 +4,12 @@ palavra
 mMiAnI
 main
 int
-.....
+..... 
 ?????
 !!!!!
 +++++
 ()()
+Ryan    
+
+
+! 
