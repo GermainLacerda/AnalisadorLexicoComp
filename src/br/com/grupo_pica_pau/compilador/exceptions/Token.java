@@ -3,15 +3,15 @@ package br.com.grupo_pica_pau.compilador.exceptions;
 public class Token {
 	public static final int TK_Space        = -1;
 	public static final int TK_IDENTIFIER   = 0;
-	public static final int TK_NUMBER       = 1;
+	public static final int TK_NUMBER       = 1;//numero
 	public static final int TK_CHARACTER    = 2;
-	public static final int TK_PONTUATION   = 3;
+	public static final int TK_PONTUATION   = 3;//pontuação
 	public static final int TK_ASSIGN       = 4;
-	public static final int TK_OPAritmetric = 5;
-	public static final int TK_CEsp         = 6;
-	public static final int TK_CResv        = 7;
-	public static final int TK_Float        = 8;
-	public static final int TK_Integrantes  = 9;
+	public static final int TK_OPAritmetric = 5;//operador aritmetrico
+	public static final int TK_CEsp         = 6;//caracter especial
+	public static final int TK_CResv        = 7;//palavra reservda
+	public static final int TK_Float        = 8;//float
+	public static final int TK_Integrantes  = 9;//palavras reservados dos menbros
 	
 
 	private int type;

@@ -27,11 +27,10 @@ public class PpScanner {
 		}
 	}
 
-	
 	private boolean isFloat(char c) {
 		return c == '.';
 	}
-		 
+
 	private boolean isDigit(char c) {// 1
 		return c >= '0' && c <= '9';
 	}
@@ -40,9 +39,13 @@ public class PpScanner {
 		return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 	}
 
+	private boolean isCoisinha(char c) {
+		return (c == '"' || c == '‘' || c == '’');
+	}
+
 	private boolean isPontuation(char c) {// 3
 
-		return c == '?' || c == '.';
+		return c == '?' || c == '.' || c == '.';
 	}
 
 	private boolean isOp_Rel(char c) {// 4
@@ -55,15 +58,17 @@ public class PpScanner {
 	}
 
 	private boolean isCaracter_esp(char c) { // 6
-		return c == ')' || c == '(' || c == '{' || c == '}' || c == ',' || c == ';';
+		return c == ')' || c == '(' || c == '{' || c == '}' || c == ',' || c == ';' || c == '@';
 	}
 
-	private boolean isReserved_char(String c){
-		return c.equals("main") || c.equals("if")  || c.equals("else") || c.equals("while") || c.equals("do") || c.equals("for")||
-			   c.equals("int")  || c.equals("float") || c.equals("char");
+	private boolean isReserved_char(String c) {
+		return c.equals("main") || c.equals("if") || c.equals("else") || c.equals("while") || c.equals("do")
+				|| c.equals("for") || c.equals("int") || c.equals("float") || c.equals("char");
 	}
-	private boolean isPica_pau(String c){
-		return c.equals("Aroldo") ||  c.equals("Felipe") ||  c.equals("Germain") ||  c.equals("Letícia") ||  c.equals("Rodrigo") ||  c.equals("Ryan");
+
+	private boolean isPica_pau(String c) {
+		return c.equals("Aroldo") || c.equals("Felipe") || c.equals("Germain") || c.equals("Letícia")
+				|| c.equals("Rodrigo") || c.equals("Ryan");
 	}
 
 	private boolean isSpace(char c) {
@@ -92,190 +97,229 @@ public class PpScanner {
 		while (true) {
 			currentChar = nextChar();
 			switch (estado) {
-				case 0:
-					if (isChar(currentChar)) {
-						term += currentChar;
-						estado = 1;
-					} else if (isDigit(currentChar)) {
-						term += currentChar;
-						estado = 3;						
-					} else if (isSpace(currentChar)) {
-						estado = 0;
-					} else if (isOp_Rel(currentChar)) {
-						term += currentChar;
-						estado = 7;
-					} else if (isOp_Ari(currentChar)) {
-						term += currentChar;
-						estado = 9;
-					} else if (isCaracter_esp(currentChar)) {
-						term += currentChar;
-						estado = 11;
-					} else if (isPontuation(currentChar)) {
-						term += currentChar;
-						estado = 5;
-					} else {
-						throw new RuntimeException("Caractere não reconhecido");
+			case 0:
+				if (isChar(currentChar) || isCoisinha(currentChar)) {
+					term += currentChar;
+					estado = 1;
+				} else if (isDigit(currentChar)) {
+					term += currentChar;
+					estado = 3;
+				} else if (isSpace(currentChar)) {
+					estado = 0;
+				} else if (isOp_Rel(currentChar)) {
+					term += currentChar;
+					estado = 7;
+				} else if (isOp_Ari(currentChar)) {
+					term += currentChar;
+					estado = 9;
+				} else if (isCaracter_esp(currentChar)) {
+					term += currentChar;
+					estado = 11;
+				} else if (isPontuation(currentChar)) {
+					term += currentChar;
+					estado = 5;
+				} else {
+					throw new RuntimeException("Caractere não reconhecido");
+				}
+				break;
+			// =================================================letras
+			case 1: // para characteres
+				if (isChar(currentChar) || isCoisinha(currentChar)) {
+					estado = 1;
+
+					term += currentChar;
+					if (isReserved_char(term)) {
+						Token token = new Token();
+						token.setText(term);
+						token.setType(token.TK_CResv);
+						nome = "Reservados";
+						token.setNome(nome);
+						return token;
+					} else if (isPica_pau(term)) {
+						Token token = new Token();
+						token.setText(term);
+						token.setType(token.TK_Integrantes);
+						nome = "Integrante";
+						token.setNome(nome);
+						return token;
 					}
-					break;
-				// =================================================letras
-				case 1: // para characteres
-					if (isChar(currentChar) || isDigit(currentChar)) {
-						estado = 1;
-						term += currentChar;
-					} else if (isReserved_char(term)) {
-						estado = 13;
-					}else if(isPica_pau(term)){
-						estado = 16;
-					}else {
-						estado = 2;
-					}
-					break;
-				case 2:
-					Token token = new Token();
-					token.setText(term);
-					token.setType(token.TK_CHARACTER);
-					nome = "identific.";
-					token.setNome(nome);
-					back();
-					return token;
-				// ==============================================numeros
-				case 3:// para numeros
-					if (isDigit(currentChar)) {
-						estado = 3;
-						term += currentChar;
-					} else if (isChar(currentChar)) {
-						estado = 1;
-					} else if (isSpace(currentChar) || isOp_Rel(currentChar)) {
-						estado = 4;
-					}else if(isFloat(currentChar)){
-						estado = 14;
-						term += currentChar;
-					} else {
-						throw new RuntimeException("Simbolo numerico nao reconhecido");
-					}
-					break;
-				case 4:
-					token = new Token();
-					token.setText(term);
-					token.setType(token.TK_NUMBER);
-					nome = "inteiros  ";
-					token.setNome(nome);
-					back();
-					return token;
-				// ============================================Pontuação
-				case 5:// pontuação
-					if (isPontuation(currentChar)) {
-						estado = 5;
-						term += currentChar;
-					} else if (isSpace(currentChar)|| isOp_Rel(currentChar)) {
-						estado = 6;
-					} else {
-						throw new RuntimeException("Simbolo de pontuação nao reconhecido");
-					}
-					break;
-				case 6:
-					token = new Token();
-					token.setText(term);
-					token.setType(token.TK_PONTUATION);
-					nome = "Pontuação ";
-					token.setNome(nome);
-					back();
-					return token;
-				// ================================operadores relacionais
-				case 7:// operadores relacionais
-					if (isOp_Rel(currentChar)) {
-						estado = 7;
-						term += currentChar;
-					} else if (isSpace(currentChar) || isEOF()) {
-						estado = 8;
-					} else {
-						throw new RuntimeException("Simbolo relacional nao reconhecido");
-					}
-					break;
-				case 8:
-					token = new Token();
-					token.setText(term);
-					token.setType(token.TK_ASSIGN);
-					nome = "Op Relac  ";
-					token.setNome(nome);
-					back();
-					return token;
-				// ================================operadores aritmetricos
-				case 9:// operadores aritmetricos
-					if (isOp_Ari(currentChar)) {
-						estado = 9;
-						term += currentChar;
-					} else if (isSpace(currentChar)|| isOp_Rel(currentChar)) {
-						estado = 10;
-					} else {
-						throw new RuntimeException("Simbolo aritmetrico nao reconhecido");
-					}
-					break;
-				case 10:
-					token = new Token();
-					token.setText(term);
-					token.setType(token.TK_OPAritmetric);
-					nome = "Op Aritm  ";
-					token.setNome(nome);
-					back();
-					return token;
-				// ================================Caracteres epeciais
-				case 11:// Caracteres epeciais
-					if (isCaracter_esp(currentChar)) {
-						estado = 11;
-						term += currentChar;
-					} else if (isSpace(currentChar)|| isOp_Rel(currentChar)) {
-						estado = 12;
-					} else {
-						throw new RuntimeException("Caracteres epecial não reconhecido");
-					}
-					break;
-				case 12:
-					token = new Token();
-					token.setText(term);
-					token.setType(token.TK_CEsp);
-					nome = "Carac Esp ";
-					token.setNome(nome);
-					back();
-					return token;
-			//===============================================Caracteres reservados
-			/*	case 13:
-					exception : uma letra diferente do caractere reservado= */
-				case 13:
-					token = new Token();
-					token.setText(term);
-					token.setType(token.TK_CResv);
-					nome = "Reservados";
-					token.setNome(nome);
-					back();
-					return token;
+
+				} else {
+					estado = 2;
+				}
+				break;
+			case 2:
+				back();
+				Token token = new Token();
+				token.setText(term);
+				token.setType(token.TK_CHARACTER);
+				nome = "Caracter  ";
+				token.setNome(nome);
+				back();
+				return token;
+			// ==============================================numeros
+			case 3:// para numeros
+				if (isDigit(currentChar)) {
+					estado = 3;
+					term += currentChar;
+				} else if (isChar(currentChar)) {
+					estado = 4;
+				} else if (isSpace(currentChar) || isOp_Rel(currentChar) || isEOF()) {
+					estado = 4;
+				} else if (isFloat(currentChar)) {
+					estado = 17;
+					term += currentChar;
+				} else {
+					throw new RuntimeException("Simbolo numerico nao reconhecido");
+				}
+				break;
+			case 4:
+				back();
+				token = new Token();
+				token.setText(term);
+				token.setType(token.TK_NUMBER);
+				nome = "inteiros  ";
+				token.setNome(nome);
+				back();
+				return token;
+			// ============================================Pontuação
+			case 5:// pontuação
+				if (isPontuation(currentChar)) {
+					estado = 5;
+					term += currentChar;
+				} else if (isSpace(currentChar) || isOp_Rel(currentChar) || isOp_Ari(currentChar)
+						|| isCaracter_esp(currentChar) || isEOF()) {
+					estado = 6;
+				} else {
+					throw new RuntimeException("Simbolo de pontuação nao reconhecido");
+				}
+				break;
+			case 6:
+				back();
+				token = new Token();
+				token.setText(term);
+				token.setType(token.TK_PONTUATION);
+				nome = "Pontuação ";
+				token.setNome(nome);
+				back();
+				return token;
+			// ================================operadores relacionais
+			case 7:// operadores relacionais
+				if (isOp_Rel(currentChar)) {
+					estado = 7;
+					term += currentChar;
+				} else if (isSpace(currentChar) || isPontuation(currentChar) || isOp_Ari(currentChar)
+						|| isCaracter_esp(currentChar) || isEOF()) {
+					estado = 8;
+				} else {
+					throw new RuntimeException("Simbolo relacional nao reconhecido");
+				}
+				break;
+			case 8:
+				back();
+				token = new Token();
+				token.setText(term);
+				token.setType(token.TK_ASSIGN);
+				nome = "Op Relac  ";
+				token.setNome(nome);
+				back();
+				return token;
+			// ================================operadores aritmetricos
+			case 9:// operadores aritmetricos
+				if (isOp_Ari(currentChar)) {
+					estado = 9;
+					term += currentChar;
+				} else if (isSpace(currentChar) || isOp_Rel(currentChar) || isPontuation(currentChar)
+						|| isCaracter_esp(currentChar) || isEOF()) {
+					estado = 10;
+				} else {
+					throw new RuntimeException("Simbolo aritmetrico nao reconhecido");
+				}
+				break;
+			case 10:
+				back();
+				token = new Token();
+				token.setText(term);
+				token.setType(token.TK_OPAritmetric);
+				nome = "Op Aritm  ";
+				token.setNome(nome);
+				back();
+				return token;
+			// ================================Caracteres epeciais
+			case 11:// Caracteres epeciais
+				if (isCaracter_esp(currentChar)) {
+					estado = 11;
+					term += currentChar;
+				} else if (isSpace(currentChar) || isOp_Rel(currentChar) || isOp_Ari(currentChar)
+						|| isPontuation(currentChar) || isCaracter_esp(currentChar) || isEOF()) {
+					estado = 12;
+				} else {
+					throw new RuntimeException("Caracteres epecial não reconhecido");
+				}
+				break;
+			case 12:
+				back();
+				token = new Token();
+				token.setText(term);
+				token.setType(token.TK_CEsp);
+				nome = "Carac Esp ";
+				token.setNome(nome);
+				back();
+				return token;
+			// ===============================================Caracteres reservados
+			/*
+			 * case 13: exception : uma letra diferente do caractere reservado=
+			 */
+			case 13:
+				back();
+				token = new Token();
+				token.setText(term);
+				token.setType(token.TK_CResv);
+				nome = "Reservados";
+				token.setNome(nome);
+				back();
+				return token;
 			// ==================================================Float
-				case 14:
-					if (isDigit(currentChar)) {
-						estado = 14;
-						term += currentChar;
-					}else if (isSpace(currentChar) || isOp_Rel(currentChar)) {
-						estado = 15;
-					}
-						break;
-					
-				case 15:
-					token = new Token();
-					token.setText(term);
-					token.setType(token.TK_Float);
-					nome = "Float     ";
-					token.setNome(nome);
-					back();
-					return token;
-			//  =================================================Integrantes grupo
-				case 16:
-					token = new Token();
-					token.setText(term);
-					token.setType(token.TK_Integrantes);
-					nome = "Integrante";
-					token.setNome(nome);
-					back();
-					return token;
+			case 14:
+				if (isDigit(currentChar)) {
+					estado = 14;
+					term += currentChar;
+				} else {
+					estado = 15;
+				}
+				break;
+
+			case 15:
+				back();
+				token = new Token();
+				token.setText(term);
+				token.setType(token.TK_Float);
+				nome = "Float     ";
+				token.setNome(nome);
+				back();
+				return token;
+			// =================================================Integrantes grupo
+			case 16:
+				back();
+				token = new Token();
+				token.setText(term);
+				token.setType(token.TK_Integrantes);
+				nome = "Integrante";
+				token.setNome(nome);
+				back();
+				return token;
+
+			case 17:
+
+				if (isDigit(currentChar)) {
+					estado = 14;
+					term += currentChar;
+				} else if (isSpace(currentChar)) {
+					term = "";
+					estado = 0;
+				} else {
+					estado = 0;
+				}
 
 			}
 
@@ -283,4 +327,3 @@ public class PpScanner {
 	}
 
 }
-
