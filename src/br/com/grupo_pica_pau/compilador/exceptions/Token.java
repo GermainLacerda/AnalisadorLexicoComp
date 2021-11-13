@@ -6,7 +6,7 @@ public class Token {
 	public static final int TK_NUMBER       = 1;//numero
 	public static final int TK_CHARACTER    = 2;
 	public static final int TK_PONTUATION   = 3;//pontuação
-	public static final int TK_ASSIGN       = 4;
+	public static final int TK_OPRelacional = 4;//operador relacional
 	public static final int TK_OPAritmetric = 5;//operador aritmetrico
 	public static final int TK_CEsp         = 6;//caracter especial
 	public static final int TK_CResv        = 7;//palavra reservda
@@ -17,6 +17,8 @@ public class Token {
 	private int type;
 	private String text;
 	private String nome;
+	private int    line;
+	private int    column;
 
 	public Token(int type, String text) {
 		super();
@@ -52,9 +54,25 @@ public class Token {
 		this.nome = n;
 	}
 
+	public int getLine() {
+		return line;
+	}
+
+	public void setLine(int line) {
+		this.line = line;
+	}
+
+	public int getColumn() {
+		return column;
+	}
+
+	public void setColumn(int column) {
+		this.column = column;
+	}
+
 	@Override
 	public String toString() {
-		return "Token type= " + type + " - "+ nome +" -  text= " + text;
+		return "Token type= " + type + " - "+ nome +" -  text=  " + text;
 	}
 
 }

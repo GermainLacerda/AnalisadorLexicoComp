@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import br.com.grupo_pica_pau.compilador.exceptions.LexicalException;
 import br.com.grupo_pica_pau.compilador.exceptions.Token;
 
 public class PpScanner {
@@ -11,10 +12,14 @@ public class PpScanner {
 	private char[] content;
 	private int estado;
 	private int pos;
+	private int column;
+	private int line;
 	private String nome;
 
 	public PpScanner(String filename) {
 		try {
+			line = 1;
+			column = 0;
 			String txtConteudo;
 			txtConteudo = new String(Files.readAllBytes(Paths.get(filename)), StandardCharsets.UTF_8);
 			System.out.println("DEBUG ----");
@@ -24,6 +29,325 @@ public class PpScanner {
 			pos = 0;
 		} catch (Exception ex) {
 			ex.printStackTrace();
+		}
+	}
+
+	public Token nextToken() {
+		char currentChar;
+		String term = "";
+		Token token;
+		if (isEOF()) {
+			return null;
+		}
+		estado = 0;
+		while (true) {
+			currentChar = nextChar();
+			switch (estado) {
+			case 0:
+				if (isChar(currentChar) || isCoisinha(currentChar)) {
+					term += currentChar;
+					estado = 1;
+				} else if (isDigit(currentChar)) {
+					term += currentChar;
+					estado = 2;
+				} else if (isSpace(currentChar)) {
+					estado = 0;
+				} else if (isIgual(currentChar)) {
+					term += currentChar;
+					estado = 6;
+				} else if (isOp_Rel(currentChar)) {
+					term += currentChar;
+					estado = 7;
+					/*token = new Token();
+					token.setText(term);
+					token.setType(token.TK_OPRelacional);
+					nome = "Op Relacional ";
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;*/
+				} else if (isOp_Ari(currentChar)) {
+					term += currentChar;
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_OPAritmetric);
+					nome = "Op Aritmetrico";
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;
+				} else if (isCaracter_esp(currentChar)) {
+					term += currentChar;
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_CEsp);
+					nome = "Caracter esp  ";
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;
+				} else if (isPontuation(currentChar)) {
+					term += currentChar;
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_PONTUATION);
+					nome = "Pontuação     ";
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;
+				} else {
+					throw new RuntimeException("Caractere não reconhecido");
+				}
+				break;
+
+			case 1:
+				if (isChar(currentChar) || isCoisinha(currentChar)) {
+					estado = 1;
+
+					term += currentChar;
+					if (isReserved_char(term)) {
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_CResv);
+						nome = "Reservados    ";
+						token.setNome(nome);
+						return token;
+					} else if (isPica_pau(term)) {
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_Integrantes);
+						nome = "Integrante    ";
+						token.setNome(nome);
+						return token;
+					}
+				} else if (isDigit(currentChar) || isSpace(currentChar) || isOp_Rel(currentChar)
+						|| isOp_Ari(currentChar) || isCaracter_esp(currentChar) || isEOF(currentChar)) {
+					if (!isEOF(currentChar))
+						back();
+					token = new Token();
+					token.setType(Token.TK_CHARACTER);
+					token.setText(term);
+					nome = "Caracter      ";
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;
+
+				} else {
+					throw new LexicalException("Malformed Identifier");
+				}
+				break;
+
+			case 2:
+				if (isDigit(currentChar)) {
+					estado = 2;
+					term += currentChar;
+				} else if (isChar(currentChar)) {
+					estado = 1;
+				} else if (isSpace(currentChar) || isOp_Rel(currentChar) || isOp_Ari(currentChar)
+						|| isCaracter_esp(currentChar) || isEOF(currentChar)) {
+					if (!isEOF(currentChar))
+						back();
+					token = new Token();
+					token.setType(Token.TK_CHARACTER);
+					token.setText(term);
+					nome = "Numérico      ";
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;
+				} else if (isFloat(currentChar)) {
+					estado = 3;
+					term += currentChar;
+				} else {
+					throw new LexicalException("Simbolo numerico nao reconhecido");
+				}
+				break;
+
+			case 3:
+				if (isDigit(currentChar)) {
+					estado = 4;
+					term += currentChar;
+				} else if (isSpace(currentChar)) {
+					term = "";
+					estado = 0;
+				} else {
+					estado = 0;
+				}
+				break;
+
+			case 4:
+				if (isDigit(currentChar)) {
+					estado = 4;
+					term += currentChar;
+				} else {
+					estado = 5;
+				}
+				break;
+
+			case 5:
+
+				token = new Token();
+				token.setText(term);
+				token.setType(token.TK_Float);
+				nome = "Float         ";
+				token.setNome(nome);
+				token.setLine(line);
+				token.setColumn(column - term.length());
+				back();
+				return token;
+
+			case 6:
+				if (isIgual(currentChar)) {
+					estado = 7;
+					term += currentChar;
+				} else {
+					back();
+					estado = 8;
+				}
+				break;
+
+			case 7:
+				if (isSpace(currentChar) || isEOF(currentChar) || isDigit(currentChar) || isChar(currentChar)
+						|| isChar(currentChar)) {
+					
+					if (term.compareTo(">") == 0) {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "Maior que     ";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+
+						return token;
+					} else if (term.compareTo("<") == 0) {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "Menor que     ";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+
+						return token;
+					} else if (term.compareTo(">=") == 0) {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "Maior ou igual";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+
+						return token;
+					} else if (term.compareTo("<=") == 0) {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "Menor ou igual";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+
+						return token;
+					} else if (term.compareTo("!=") == 0) {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "Diferente     ";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+
+						return token;
+					} else {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "igual         ";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+
+						return token;
+					}
+				} else if (isIgual(currentChar)) {
+					estado = 8;
+				} else {
+					term += currentChar;
+					System.out.print("\"" + term + "\" ");
+					throw new LexicalException("Operador relacional mal formado");
+				}
+				break;
+			case 8:
+				if (isSpace(currentChar) || isEOF(currentChar) || isDigit(currentChar) || isChar(currentChar)) {
+					
+					if (isOp_Ari(currentChar)) {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "somar         ";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+						return token;
+					} else if (isOp_Ari(currentChar)) {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "subtr         ";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+						return token;
+					} else if (isOp_Ari(currentChar)) {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "mult         ";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+						return token;
+					} else if (isOp_Ari(currentChar)) {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "dividir         ";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+						return token;
+					} else {
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPRelacional);
+						nome = "igual         ";
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+						return token;
+					}
+				} else {
+					term += currentChar;
+					System.out.print("\"" + term + "\" ");
+					throw new LexicalException("Operador Aritmetico mal formado");
+				}
+				
+			}
 		}
 	}
 
@@ -50,7 +374,7 @@ public class PpScanner {
 
 	private boolean isOp_Rel(char c) {// 4
 
-		return c == '<' || c == '>' || c == '=' || c == '!';
+		return c == '<' || c == '>' || c == '!';
 	}
 
 	private boolean isOp_Ari(char c) {// 5
@@ -72,258 +396,36 @@ public class PpScanner {
 	}
 
 	private boolean isSpace(char c) {
+		if (c == '\n' || c == '\r') {
+			line++;
+			column = 0;
+		}
 		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 	}
 
 	private boolean isEOF() {
-		return pos == content.length;
+
+		return pos >= content.length;
+	}
+
+	private boolean isEOF(char c) {
+		return c == '\0';
 	}
 
 	private char nextChar() {
+		if (isEOF()) {
+			return '\0';
+		}
 		return content[pos++];
+
+	}
+
+	private boolean isIgual(char c) {
+		return c == '=';
 	}
 
 	private void back() {
 		pos--;
+		column--;
 	}
-
-	public Token nextToken() {
-		char currentChar;
-		String term = "";
-		if (isEOF()) {
-			return null;
-		}
-		estado = 0;
-		while (true) {
-			currentChar = nextChar();
-			switch (estado) {
-			case 0:
-				if (isChar(currentChar) || isCoisinha(currentChar)) {
-					term += currentChar;
-					estado = 1;
-				} else if (isDigit(currentChar)) {
-					term += currentChar;
-					estado = 3;
-				} else if (isSpace(currentChar)) {
-					estado = 0;
-				} else if (isOp_Rel(currentChar)) {
-					term += currentChar;
-					estado = 7;
-				} else if (isOp_Ari(currentChar)) {
-					term += currentChar;
-					estado = 9;
-				} else if (isCaracter_esp(currentChar)) {
-					term += currentChar;
-					estado = 11;
-				} else if (isPontuation(currentChar)) {
-					term += currentChar;
-					estado = 5;
-				} else {
-					throw new RuntimeException("Caractere não reconhecido");
-				}
-				break;
-			// =================================================letras
-			case 1: // para characteres
-				if (isChar(currentChar) || isCoisinha(currentChar)) {
-					estado = 1;
-
-					term += currentChar;
-					if (isReserved_char(term)) {
-						Token token = new Token();
-						token.setText(term);
-						token.setType(token.TK_CResv);
-						nome = "Reservados";
-						token.setNome(nome);
-						return token;
-					} else if (isPica_pau(term)) {
-						Token token = new Token();
-						token.setText(term);
-						token.setType(token.TK_Integrantes);
-						nome = "Integrante";
-						token.setNome(nome);
-						return token;
-					}
-
-				} else {
-					estado = 2;
-				}
-				break;
-			case 2:
-				back();
-				Token token = new Token();
-				token.setText(term);
-				token.setType(token.TK_CHARACTER);
-				nome = "Caracter  ";
-				token.setNome(nome);
-				back();
-				return token;
-			// ==============================================numeros
-			case 3:// para numeros
-				if (isDigit(currentChar)) {
-					estado = 3;
-					term += currentChar;
-				} else if (isChar(currentChar)) {
-					estado = 4;
-				} else if (isSpace(currentChar) || isOp_Rel(currentChar) || isEOF()) {
-					estado = 4;
-				} else if (isFloat(currentChar)) {
-					estado = 17;
-					term += currentChar;
-				} else {
-					throw new RuntimeException("Simbolo numerico nao reconhecido");
-				}
-				break;
-			case 4:
-				back();
-				token = new Token();
-				token.setText(term);
-				token.setType(token.TK_NUMBER);
-				nome = "inteiros  ";
-				token.setNome(nome);
-				back();
-				return token;
-			// ============================================Pontuação
-			case 5:// pontuação
-				if (isPontuation(currentChar)) {
-					estado = 5;
-					term += currentChar;
-				} else if (isSpace(currentChar) || isOp_Rel(currentChar) || isOp_Ari(currentChar)
-						|| isCaracter_esp(currentChar) || isEOF()) {
-					estado = 6;
-				} else {
-					throw new RuntimeException("Simbolo de pontuação nao reconhecido");
-				}
-				break;
-			case 6:
-				back();
-				token = new Token();
-				token.setText(term);
-				token.setType(token.TK_PONTUATION);
-				nome = "Pontuação ";
-				token.setNome(nome);
-				back();
-				return token;
-			// ================================operadores relacionais
-			case 7:// operadores relacionais
-				if (isOp_Rel(currentChar)) {
-					estado = 7;
-					term += currentChar;
-				} else if (isSpace(currentChar) || isPontuation(currentChar) || isOp_Ari(currentChar)
-						|| isCaracter_esp(currentChar) || isEOF()) {
-					estado = 8;
-				} else {
-					throw new RuntimeException("Simbolo relacional nao reconhecido");
-				}
-				break;
-			case 8:
-				back();
-				token = new Token();
-				token.setText(term);
-				token.setType(token.TK_ASSIGN);
-				nome = "Op Relac  ";
-				token.setNome(nome);
-				back();
-				return token;
-			// ================================operadores aritmetricos
-			case 9:// operadores aritmetricos
-				if (isOp_Ari(currentChar)) {
-					estado = 9;
-					term += currentChar;
-				} else if (isSpace(currentChar) || isOp_Rel(currentChar) || isPontuation(currentChar)
-						|| isCaracter_esp(currentChar) || isEOF()) {
-					estado = 10;
-				} else {
-					throw new RuntimeException("Simbolo aritmetrico nao reconhecido");
-				}
-				break;
-			case 10:
-				back();
-				token = new Token();
-				token.setText(term);
-				token.setType(token.TK_OPAritmetric);
-				nome = "Op Aritm  ";
-				token.setNome(nome);
-				back();
-				return token;
-			// ================================Caracteres epeciais
-			case 11:// Caracteres epeciais
-				if (isCaracter_esp(currentChar)) {
-					estado = 11;
-					term += currentChar;
-				} else if (isSpace(currentChar) || isOp_Rel(currentChar) || isOp_Ari(currentChar)
-						|| isPontuation(currentChar) || isCaracter_esp(currentChar) || isEOF()) {
-					estado = 12;
-				} else {
-					throw new RuntimeException("Caracteres epecial não reconhecido");
-				}
-				break;
-			case 12:
-				back();
-				token = new Token();
-				token.setText(term);
-				token.setType(token.TK_CEsp);
-				nome = "Carac Esp ";
-				token.setNome(nome);
-				back();
-				return token;
-			// ===============================================Caracteres reservados
-			/*
-			 * case 13: exception : uma letra diferente do caractere reservado=
-			 */
-			case 13:
-				back();
-				token = new Token();
-				token.setText(term);
-				token.setType(token.TK_CResv);
-				nome = "Reservados";
-				token.setNome(nome);
-				back();
-				return token;
-			// ==================================================Float
-			case 14:
-				if (isDigit(currentChar)) {
-					estado = 14;
-					term += currentChar;
-				} else {
-					estado = 15;
-				}
-				break;
-
-			case 15:
-				back();
-				token = new Token();
-				token.setText(term);
-				token.setType(token.TK_Float);
-				nome = "Float     ";
-				token.setNome(nome);
-				back();
-				return token;
-			// =================================================Integrantes grupo
-			case 16:
-				back();
-				token = new Token();
-				token.setText(term);
-				token.setType(token.TK_Integrantes);
-				nome = "Integrante";
-				token.setNome(nome);
-				back();
-				return token;
-
-			case 17:
-
-				if (isDigit(currentChar)) {
-					estado = 14;
-					term += currentChar;
-				} else if (isSpace(currentChar)) {
-					term = "";
-					estado = 0;
-				} else {
-					estado = 0;
-				}
-
-			}
-
-		}
-	}
-
 }
