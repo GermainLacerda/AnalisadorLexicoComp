@@ -52,30 +52,14 @@ public class PpScanner {
 					estado = 2;
 				} else if (isSpace(currentChar)) {
 					estado = 0;
-				} else if (isIgual(currentChar)) {
+				} /*
+					 * else if (isIgual(currentChar)) { term += currentChar; estado = 6; }
+					 */ else if (isOp_Rel(currentChar)) {
 					term += currentChar;
-					estado = 6;
-				} else if (isOp_Rel(currentChar)) {
-					term += currentChar;
-					estado = 7;
-					/*token = new Token();
-					token.setText(term);
-					token.setType(token.TK_OPRelacional);
-					nome = "Op Relacional ";
-					token.setNome(nome);
-					token.setLine(line);
-					token.setColumn(column - term.length());
-					return token;*/
+					estado = 5;
 				} else if (isOp_Ari(currentChar)) {
 					term += currentChar;
-					token = new Token();
-					token.setText(term);
-					token.setType(token.TK_OPAritmetric);
-					nome = "Op Aritmetrico";
-					token.setNome(nome);
-					token.setLine(line);
-					token.setColumn(column - term.length());
-					return token;
+					estado = 7;
 				} else if (isCaracter_esp(currentChar)) {
 					term += currentChar;
 					token = new Token();
@@ -97,7 +81,13 @@ public class PpScanner {
 					token.setColumn(column - term.length());
 					return token;
 				} else {
-					throw new RuntimeException("Caractere não reconhecido");
+					if (isEOF()) {
+						System.out.println("Fim do Arquivo!");
+						System.exit(0);
+					} else {
+						throw new RuntimeException("Caracter inserido não é reconhecido por essa linguagem");
+					}
+
 				}
 				break;
 
@@ -161,19 +151,19 @@ public class PpScanner {
 					estado = 3;
 					term += currentChar;
 				} else {
-					throw new LexicalException("Simbolo numerico nao reconhecido");
+					throw new LexicalException("Simbolo numérico nao reconhecido");
 				}
 				break;
 
-			case 3:
+			case 3: // is float
 				if (isDigit(currentChar)) {
 					estado = 4;
 					term += currentChar;
-				} else if (isSpace(currentChar)) {
-					term = "";
-					estado = 0;
 				} else {
-					estado = 0;
+					back();
+					throw new LexicalException(
+							"Simbolo numérico nescessário para Float à direita do '.' não reconhecido na coluna: "
+									+ pos);
 				}
 				break;
 
@@ -182,171 +172,108 @@ public class PpScanner {
 					estado = 4;
 					term += currentChar;
 				} else {
-					estado = 5;
+
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_Float);
+					nome = "Float         ";
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					back();
+					return token;
 				}
 				break;
 
 			case 5:
-
+				// caso optar para o sistema de cada op rel ser um token dif usar a atribuição
+				// do tolen dentro dos ifs
+				// assim como os nomes.
+				if (currentChar != '=') {
+					if (term.compareTo("<") == 0) {
+						nome = "Op Relacional (menor que)";
+					} else if (term.compareTo(">") == 0) {
+						nome = "Op Relacional (maior que)";
+					} else if (term.compareTo("=") == 0) {
+						nome = "Op Aritmetico (atri )";
+						back();
+						token = new Token();
+						token.setText(term);
+						token.setType(token.TK_OPArithmetic);
+						token.setNome(nome);
+						token.setLine(line);
+						token.setColumn(column - term.length());
+						return token;
+					}
+					estado = 6;
+				} else {
+					term += currentChar;
+					if (term.charAt(0) == '!') {
+						nome = "Op Relacional (diferente)";
+					} else if (term.charAt(0) == '<') {
+						nome = "Op Relacional (menor ou igual que)";
+					} else if (term.charAt(0) == '>') {
+						nome = "Op Relacional (maior ou igual que)";
+					} else if (term.charAt(0) == '=') {
+						nome = "Op Relacional (igual)";
+					}
+					estado = 6;
+				}
+				break;
+			case 6:
+				back();
 				token = new Token();
 				token.setText(term);
-				token.setType(token.TK_Float);
-				nome = "Float         ";
+				token.setType(token.TK_OPRelacional);
 				token.setNome(nome);
 				token.setLine(line);
 				token.setColumn(column - term.length());
-				back();
 				return token;
-
-			case 6:
-				if (isIgual(currentChar)) {
-					estado = 7;
-					term += currentChar;
-				} else {
-					back();
-					estado = 8;
-				}
-				break;
-
 			case 7:
-				if (isSpace(currentChar) || isEOF(currentChar) || isDigit(currentChar) || isChar(currentChar)
-						|| isChar(currentChar)) {
-					
-					if (term.compareTo(">") == 0) {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "Maior que     ";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-
-						return token;
-					} else if (term.compareTo("<") == 0) {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "Menor que     ";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-
-						return token;
-					} else if (term.compareTo(">=") == 0) {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "Maior ou igual";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-
-						return token;
-					} else if (term.compareTo("<=") == 0) {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "Menor ou igual";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-
-						return token;
-					} else if (term.compareTo("!=") == 0) {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "Diferente     ";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-
-						return token;
-					} else {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "igual         ";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-
-						return token;
-					}
-				} else if (isIgual(currentChar)) {
-					estado = 8;
-				} else {
-					term += currentChar;
-					System.out.print("\"" + term + "\" ");
-					throw new LexicalException("Operador relacional mal formado");
+				// caso optar para o sistema de cada op arit ser um token dif usar a atribuição
+				// do tolen dentro dos ifs assim como os nomes.
+				if (term.compareTo("+") == 0) {
+					back();
+					nome = "Op Aritmetico (soma )";
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_OPArithmetic);
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;
+				} else if (term.compareTo("-") == 0) {
+					back();
+					nome = "Op Aritmetico (subtr)";
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_OPArithmetic);
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;
+				} else if (term.compareTo("*") == 0) {
+					back();
+					nome = "Op Aritmetico (mult )";
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_OPArithmetic);
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;
+				} else if (term.compareTo("/") == 0) {
+					back();
+					nome = "Op Aritmetico (divi )";
+					token = new Token();
+					token.setText(term);
+					token.setType(token.TK_OPArithmetic);
+					token.setNome(nome);
+					token.setLine(line);
+					token.setColumn(column - term.length());
+					return token;
 				}
-				break;
-			case 8:
-				if (isSpace(currentChar) || isEOF(currentChar) || isDigit(currentChar) || isChar(currentChar)) {
-					
-					if (isOp_Ari(currentChar)) {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "somar         ";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-						return token;
-					} else if (isOp_Ari(currentChar)) {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "subtr         ";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-						return token;
-					} else if (isOp_Ari(currentChar)) {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "mult         ";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-						return token;
-					} else if (isOp_Ari(currentChar)) {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "dividir         ";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-						return token;
-					} else {
-						back();
-						token = new Token();
-						token.setText(term);
-						token.setType(token.TK_OPRelacional);
-						nome = "igual         ";
-						token.setNome(nome);
-						token.setLine(line);
-						token.setColumn(column - term.length());
-						return token;
-					}
-				} else {
-					term += currentChar;
-					System.out.print("\"" + term + "\" ");
-					throw new LexicalException("Operador Aritmetico mal formado");
-				}
-				
+
 			}
 		}
 	}
@@ -369,12 +296,12 @@ public class PpScanner {
 
 	private boolean isPontuation(char c) {// 3
 
-		return c == '?' || c == '.' || c == '.';
+		return c == '?' || c == '.' || c == ',';
 	}
 
 	private boolean isOp_Rel(char c) {// 4
 
-		return c == '<' || c == '>' || c == '!';
+		return c == '<' || c == '>' || c == '!' || c == '=';
 	}
 
 	private boolean isOp_Ari(char c) {// 5
@@ -420,9 +347,9 @@ public class PpScanner {
 
 	}
 
-	private boolean isIgual(char c) {
-		return c == '=';
-	}
+	/*
+	 * private boolean isIgual(char c) { return c == '='; }
+	 */
 
 	private void back() {
 		pos--;
