@@ -7,12 +7,27 @@ public class Token {
 	public static final int TK_CHARACTER    = 2;
 	public static final int TK_PONTUATION   = 3;//pontuação
 	public static final int TK_OPRelacional = 4;//operador relacional
-	public static final int TK_OPAritmetric = 5;//operador aritmetrico
+	public static final int TK_OPArithmetic = 5;//operador aritmetico
 	public static final int TK_CEsp         = 6;//caracter especial
 	public static final int TK_CResv        = 7;//palavra reservda
 	public static final int TK_Float        = 8;//float
 	public static final int TK_Integrantes  = 9;//palavras reservados dos menbros
-	
+
+	/*
+		public static final int TK_OPRelMenQ  = 10 // <
+		public static final int TK_OPRelMaiQ  = 11 // >
+		public static final int TK_OPRelMenIg = 12 // <=
+		public static final int TK_OPRelMaiIg = 13 // >=
+		public static final int TK_OPRelDif   = 14 // !=
+		public static final int TK_OPRelIgual = 15 // ==
+	*/
+	/*
+		public static final int TK_OPAriSoma  = 16 // +
+		public static final int TK_OPAriSubt  = 17 // -
+		public static final int TK_OPAriDiv   = 18 // /
+		public static final int TK_OPAriMult  = 19 // *
+		public static final int TK_OPAriAtri  = 20 // =
+	*/
 
 	private int type;
 	private String text;

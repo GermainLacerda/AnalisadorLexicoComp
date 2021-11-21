@@ -1,6 +1,8 @@
 package br.com.grupo_pica_pau.compilador.main;
 
 import java.io.File;
+
+import br.com.grupo_pica_pau.Parser.parser;
 import br.com.grupo_pica_pau.compilador.exceptions.Token;
 import br.com.grupo_pica_pau.compilador.lexico.PpScanner;
 
@@ -11,8 +13,9 @@ public class MainClass {
         if (!arq.exists()) {
             arq.mkdir();
         }
-		try {
+		
 			PpScanner sc = new PpScanner(arq.getPath());
+			parser pa = new parser (sc);
 			Token token = null;
 			System.out.println("Especificações do documento:  ");
 			do {
@@ -21,10 +24,7 @@ public class MainClass {
 					System.out.println(token);
 				}
 			} while (token != null);
-		} catch (Exception e) {
-			System.out.println("Fim do documento.");
-		}
-
+		
 	}
 }
 

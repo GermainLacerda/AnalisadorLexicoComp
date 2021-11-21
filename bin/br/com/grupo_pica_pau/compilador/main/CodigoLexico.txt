@@ -1,3 +1,13 @@
-!=
-==+
-
+main int float char
+inta
+int a = ‘a’ 
+=== 
+ >=
+123abc
+1.100
+111.111
+‘1 
+@
+1.1a
+1.1
+a
